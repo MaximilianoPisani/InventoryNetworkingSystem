@@ -106,7 +106,7 @@ public class RunnerManager : MonoBehaviour, INetworkRunnerCallbacks
             interact = interact,
             jump = jump,
             equipSlot = -1,
-            aimRotation = aimRot 
+            aimRotation = aimRot
         };
 
         input.Set(data);
