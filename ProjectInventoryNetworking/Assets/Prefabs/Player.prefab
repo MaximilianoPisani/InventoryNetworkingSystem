@@ -1606,9 +1606,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b04ea602c2bb82245b3d723d35356c6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inventoryPanel: {fileID: 3235935023843017806}
-  openButton: {fileID: 2263493787930678873}
-  closeButton: {fileID: 615494391686306717}
+  _inventoryPanel: {fileID: 3235935023843017806}
+  _openButton: {fileID: 2263493787930678873}
+  _closeButton: {fileID: 615494391686306717}
 --- !u!1 &8162447073703031279
 GameObject:
   m_ObjectHideFlags: 0

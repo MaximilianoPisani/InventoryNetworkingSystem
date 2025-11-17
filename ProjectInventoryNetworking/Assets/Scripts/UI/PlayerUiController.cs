@@ -5,19 +5,19 @@ using Fusion;
 public class PlayerUIController : NetworkBehaviour
 {
     [Header("UI References")]
-    [SerializeField] private GameObject inventoryPanel;
-    [SerializeField] private Button openButton;
-    [SerializeField] private Button closeButton;
+    [SerializeField] private GameObject _inventoryPanel;
+    [SerializeField] private Button _openButton;
+    [SerializeField] private Button _closeButton;
 
-    private bool initialized = false;
+    private bool _initialized = false;
 
     public override void Spawned()
     {
         if (!HasInputAuthority)
         {
-            if (inventoryPanel != null) Destroy(inventoryPanel.gameObject);
-            if (openButton != null) Destroy(openButton.gameObject);
-            if (closeButton != null) Destroy(closeButton.gameObject);
+            if (_inventoryPanel != null) Destroy(_inventoryPanel.gameObject);
+            if (_openButton != null) Destroy(_openButton.gameObject);
+            if (_closeButton != null) Destroy(_closeButton.gameObject);
             Destroy(this);
             return;
         }
@@ -27,29 +27,29 @@ public class PlayerUIController : NetworkBehaviour
 
     private void SetupLocalUI()
     {
-        if (initialized) return;
-        initialized = true;
+        if (_initialized) return;
+        _initialized = true;
 
-        if (inventoryPanel != null)
-            inventoryPanel.SetActive(false);
+        if (_inventoryPanel != null)
+            _inventoryPanel.SetActive(false);
 
-        if (openButton != null)
+        if (_openButton != null)
         {
-            openButton.onClick.RemoveAllListeners();
-            openButton.onClick.AddListener(() =>
+            _openButton.onClick.RemoveAllListeners();
+            _openButton.onClick.AddListener(() =>
             {
-                if (inventoryPanel != null)
-                    inventoryPanel.SetActive(true);
+                if (_inventoryPanel != null)
+                    _inventoryPanel.SetActive(true);
             });
         }
 
-        if (closeButton != null)
+        if (_closeButton != null)
         {
-            closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(() =>
+            _closeButton.onClick.RemoveAllListeners();
+            _closeButton.onClick.AddListener(() =>
             {
-                if (inventoryPanel != null)
-                    inventoryPanel.SetActive(false);
+                if (_inventoryPanel != null)
+                    _inventoryPanel.SetActive(false);
             });
         }
     }

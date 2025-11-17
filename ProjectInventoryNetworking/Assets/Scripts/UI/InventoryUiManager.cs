@@ -10,7 +10,7 @@ public class InventoryUiManager : MonoBehaviour
     [SerializeField] private Button _cancelButton;
     [SerializeField] private GameObject _panel;
 
-    private readonly List<ItemSO> collectedItems = new List<ItemSO>();
+    private readonly List<ItemSO> _collectedItems = new List<ItemSO>();
 
     private void Awake()
     {
@@ -29,9 +29,9 @@ public class InventoryUiManager : MonoBehaviour
     public void AddItem(ItemSO item, Action<ItemSO> onClick = null)
     {
         if (item == null || _contentParent == null) return;
-        if (collectedItems.Contains(item)) return;
+        if (_collectedItems.Contains(item)) return;
 
-        collectedItems.Add(item);
+        _collectedItems.Add(item);
 
         if (item.slotPrefab == null)
         {
@@ -56,7 +56,7 @@ public class InventoryUiManager : MonoBehaviour
 
     public void Clear()
     {
-        collectedItems.Clear();
+        _collectedItems.Clear();
         if (_contentParent == null) return;
 
         foreach (Transform child in _contentParent)
