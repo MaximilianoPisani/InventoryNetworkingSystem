@@ -13,10 +13,13 @@ public class Inventory : NetworkBehaviour
 
         for (int i = 0; i < Items.Length; i++)
         {
+
             if (Items[i].id == 0)
             {
+
                 Items.Set(i, item);
                 return true;
+
             }
         }
 
@@ -24,3 +27,4 @@ public class Inventory : NetworkBehaviour
         return false;
     }
 }
+

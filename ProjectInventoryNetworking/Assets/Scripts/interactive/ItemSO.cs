@@ -9,8 +9,9 @@ public class ItemSO : ScriptableObject
     public string itemName;
     public Sprite icon;
     public ItemType type;
-    public WeaponCategory weaponCategory; 
+    public WeaponCategory weaponCategory;
 
     public GameObject slotPrefab;
     public GameObject equipPrefab;
 }
+

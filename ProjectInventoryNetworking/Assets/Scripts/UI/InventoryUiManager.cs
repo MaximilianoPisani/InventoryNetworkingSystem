@@ -18,7 +18,7 @@ public class InventoryUiManager : MonoBehaviour
             _toggleButton.onClick.AddListener(TogglePanel);
 
         if (_cancelButton != null)
-            _cancelButton.onClick.AddListener(ClosePanel);
+           _cancelButton.onClick.AddListener(ClosePanel);
     }
 
     public void SetContent(Transform content)
@@ -29,17 +29,20 @@ public class InventoryUiManager : MonoBehaviour
     public void AddItem(ItemSO item, Action<ItemSO> onClick = null)
     {
         if (item == null || _contentParent == null) return;
+
         if (_collectedItems.Contains(item)) return;
 
         _collectedItems.Add(item);
 
         if (item.slotPrefab == null)
-        {
+        { 
+        
             Debug.LogWarning($"Item {item.itemName} has no slotPrefab assigned!");
             return;
         }
 
         GameObject slotObj = Instantiate(item.slotPrefab, _contentParent);
+
         slotObj.name = item.itemName + "_Slot";
 
         InventorySlot slot = slotObj.GetComponent<InventorySlot>();
@@ -47,11 +50,13 @@ public class InventoryUiManager : MonoBehaviour
             slot.SetData(item);
 
         Button slotButton = slotObj.GetComponent<Button>();
+
         if (slotButton != null && onClick != null)
         {
             slotButton.onClick.RemoveAllListeners();
             slotButton.onClick.AddListener(() => onClick.Invoke(item));
         }
+
     }
 
     public void Clear()
@@ -74,4 +79,5 @@ public class InventoryUiManager : MonoBehaviour
         if (_panel == null) return;
         _panel.SetActive(false);
     }
+
 }

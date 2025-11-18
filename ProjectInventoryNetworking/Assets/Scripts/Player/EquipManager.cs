@@ -4,6 +4,7 @@ using UnityEngine;
 public class EquipManager : NetworkBehaviour
 {
     [SerializeField] private Transform _equipPoint;
+
     private GameObject _currentEquipped;
 
     [Networked, OnChangedRender(nameof(OnEquippedChangedRender))]
@@ -53,6 +54,7 @@ public class EquipManager : NetworkBehaviour
         }
 
         GameObject obj = Instantiate(item.equipPrefab, _equipPoint);
+
         obj.transform.localPosition = Vector3.zero;
         obj.transform.localRotation = Quaternion.identity;
         obj.name = item.itemName + "_Equipped";
@@ -61,6 +63,7 @@ public class EquipManager : NetworkBehaviour
             col.enabled = false;
 
         _currentEquipped = obj;
+
     }
 
     public override void Spawned()

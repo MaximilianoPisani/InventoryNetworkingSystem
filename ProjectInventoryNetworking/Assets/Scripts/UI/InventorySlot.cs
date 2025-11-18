@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour
-{
+{ 
     [SerializeField] private Image iconImage;
     private ItemSO _currentItem;
 
@@ -14,4 +14,5 @@ public class InventorySlot : MonoBehaviour
     }
 
     public ItemSO GetItem() => _currentItem;
+
 }
