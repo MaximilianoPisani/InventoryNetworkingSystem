@@ -2,7 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Fusion;
 
-public class PlayerUIController : NetworkBehaviour
+// UI que solo existe en el cliente local y controla abrir/cerrar el inventario
+public class InventoryUIPanelController : NetworkBehaviour
 {
     [Header("UI References")]
     [SerializeField] private GameObject _inventoryPanel;
@@ -13,6 +14,7 @@ public class PlayerUIController : NetworkBehaviour
 
     public override void Spawned()
     {
+        // se elimina UI en clientes que no son el input authority
         if (!HasInputAuthority)
         {
             if (_inventoryPanel != null) Destroy(_inventoryPanel.gameObject);
@@ -22,16 +24,20 @@ public class PlayerUIController : NetworkBehaviour
             return;
         }
 
+
         SetupLocalUI();
     }
+
 
     private void SetupLocalUI()
     {
         if (_initialized) return;
         _initialized = true;
 
+
         if (_inventoryPanel != null)
             _inventoryPanel.SetActive(false);
+
 
         if (_openButton != null)
         {
@@ -42,6 +48,7 @@ public class PlayerUIController : NetworkBehaviour
                     _inventoryPanel.SetActive(true);
             });
         }
+
 
         if (_closeButton != null)
         {

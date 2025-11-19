@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Base de datos central de todos los ItemSO del juego
 [CreateAssetMenu(fileName = "ItemDatabase", menuName = "Inventory/ItemDatabase")]
 public class ItemDatabase : ScriptableObject
 {

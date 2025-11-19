@@ -3,81 +3,52 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// Manager local para mostrar el inventario
 public class InventoryUiManager : MonoBehaviour
 {
     [SerializeField] private Transform _contentParent;
-    [SerializeField] private Button _toggleButton;
-    [SerializeField] private Button _cancelButton;
-    [SerializeField] private GameObject _panel;
 
-    private readonly List<ItemSO> _collectedItems = new List<ItemSO>();
-
-    private void Awake()
-    {
-        if (_toggleButton != null)
-            _toggleButton.onClick.AddListener(TogglePanel);
-
-        if (_cancelButton != null)
-           _cancelButton.onClick.AddListener(ClosePanel);
-    }
+    private readonly List<ItemSO> _collected = new List<ItemSO>();
 
     public void SetContent(Transform content)
     {
         _contentParent = content;
     }
 
-    public void AddItem(ItemSO item, Action<ItemSO> onClick = null)
+    public void AddItem(ItemSO item, Action<ItemSO> onClick)
     {
         if (item == null || _contentParent == null) return;
+        if (_collected.Contains(item)) return;
 
-        if (_collectedItems.Contains(item)) return;
-
-        _collectedItems.Add(item);
+        _collected.Add(item);
 
         if (item.slotPrefab == null)
-        { 
-        
-            Debug.LogWarning($"Item {item.itemName} has no slotPrefab assigned!");
+        {
+            Debug.LogWarning($"Item {item.itemName} has no slotPrefab!");
             return;
         }
 
         GameObject slotObj = Instantiate(item.slotPrefab, _contentParent);
-
         slotObj.name = item.itemName + "_Slot";
 
         InventorySlot slot = slotObj.GetComponent<InventorySlot>();
-        if (slot != null)
-            slot.SetData(item);
+        if (slot != null) slot.SetData(item);
 
-        Button slotButton = slotObj.GetComponent<Button>();
-
-        if (slotButton != null && onClick != null)
+        Button button = slotObj.GetComponent<Button>();
+        if (button != null)
         {
-            slotButton.onClick.RemoveAllListeners();
-            slotButton.onClick.AddListener(() => onClick.Invoke(item));
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => onClick?.Invoke(item));
         }
-
     }
 
     public void Clear()
     {
-        _collectedItems.Clear();
+        _collected.Clear();
+
         if (_contentParent == null) return;
 
         foreach (Transform child in _contentParent)
             Destroy(child.gameObject);
     }
-
-    private void TogglePanel()
-    {
-        if (_panel == null) return;
-        _panel.SetActive(!_panel.activeSelf);
-    }
-
-    private void ClosePanel()
-    {
-        if (_panel == null) return;
-        _panel.SetActive(false);
-    }
-
 }

@@ -5,7 +5,6 @@ using UnityEngine.Windows;
 
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(NetworkCharacterController))]
-[RequireComponent(typeof(Inventory))]
 public class PlayerController : NetworkBehaviour
 {
     private Transform _cam;

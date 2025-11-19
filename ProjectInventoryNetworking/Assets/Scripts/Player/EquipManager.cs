@@ -1,41 +1,69 @@
-using Fusion;
 using UnityEngine;
+using Fusion;
 
+[RequireComponent(typeof(PlayerInventoryData))]
+// Componente encargado de manejar qué item está equipado
 public class EquipManager : NetworkBehaviour
 {
     [SerializeField] private Transform _equipPoint;
 
     private GameObject _currentEquipped;
+    private PlayerInventoryData _inventory;
 
-    [Networked, OnChangedRender(nameof(OnEquippedChangedRender))]
-    public int EquippedItemId { get; set; }
+    // ID sincronizado del item equipado
+    [Networked, OnChangedRender(nameof(OnEquippedChangedRender))] public int EquippedItemId { get; set; }
 
-    public void EquipItemFromSlot(ItemSO item)
+    public override void Spawned()
     {
-        if (!Object.HasInputAuthority) return;
+        _inventory = GetComponent<PlayerInventoryData>();
 
-        if (item == null)
+        if (EquippedItemId != 0)
+            RenderEquippedItem();
+    }
+
+    public void OnSlotClicked(ItemSO item)
+    {
+        if (!HasInputAuthority || item == null)
+            return;
+
+        if (EquippedItemId == item.id)
+            RPC_RequestEquip(0);
+        else
+            RPC_RequestEquip(item.id);
+    }
+
+    // Server valida el equipamiento
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    private void RPC_RequestEquip(int id, RpcInfo info = default)
+    {
+        if (_inventory == null)
         {
-            Debug.LogWarning("EquipItemFromSlot received null from UI - ignored.");
+            Debug.LogWarning("EquipManager: missing inventory reference");
             return;
         }
 
-        RPC_SetEquipped(item.id);
-    }
+        // Desequipar
+        if (id == 0)
+        {
+            EquippedItemId = 0;
+            return;
+        }
+        if (!_inventory.HasItem(id))
+        {
+            Debug.LogWarning($"Equip rejected: Player does not own item {id}");
+            return;
+        }
 
-    public void Unequip()
-    {
-        if (!Object.HasInputAuthority) return;
-        RPC_SetEquipped(0);
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void RPC_SetEquipped(int id)
-    {
         EquippedItemId = id;
     }
 
-    private void OnEquippedChangedRender()
+    // Renderización en todos los clientes
+    public void OnEquippedChangedRender()
+    {
+        RenderEquippedItem();
+    }
+
+    private void RenderEquippedItem()
     {
         if (_currentEquipped != null)
         {
@@ -43,32 +71,32 @@ public class EquipManager : NetworkBehaviour
             _currentEquipped = null;
         }
 
-        if (EquippedItemId == 0) return;
+        if (EquippedItemId == 0)
+            return;
 
         ItemSO item = ItemDatabase.GetItemByIdStatic(EquippedItemId);
 
         if (item == null)
         {
-            Debug.LogWarning($"EquipManager: ItemSO with ID {EquippedItemId} not found.");
+            Debug.LogWarning($"EquipManager: ItemSO {EquippedItemId} not found");
+            return;
+        }
+
+        if (item.equipPrefab == null)
+        {
+            Debug.LogWarning($"Item {item.itemName} has no equipPrefab!");
             return;
         }
 
         GameObject obj = Instantiate(item.equipPrefab, _equipPoint);
-
         obj.transform.localPosition = Vector3.zero;
         obj.transform.localRotation = Quaternion.identity;
-        obj.name = item.itemName + "_Equipped";
 
         if (obj.TryGetComponent<Collider>(out var col))
             col.enabled = false;
 
+        obj.name = item.itemName + "_Equipped";
+
         _currentEquipped = obj;
-
-    }
-
-    public override void Spawned()
-    {
-        if (EquippedItemId != 0)
-            OnEquippedChangedRender();
     }
 }

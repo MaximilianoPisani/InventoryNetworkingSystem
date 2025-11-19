@@ -1,15 +1,18 @@
 using UnityEngine;
 using Fusion;
 
+// Componente item que puede ser recogido
 public class PickupableItem : NetworkBehaviour
 {
     [SerializeField] private ItemSO itemDataSO;
     public ItemSO ItemDataSO => itemDataSO;
 
+
+    // Datos que se envían al inventario (NetworkArray)
     public ItemData ItemData => new ItemData
     {
-        id = itemDataSO.id,
-        type = itemDataSO.type
+        id = itemDataSO != null ? itemDataSO.id : 0,
+        type = itemDataSO != null ? itemDataSO.type : ItemType.Consumable
     };
 
     private void Reset()
@@ -17,14 +20,5 @@ public class PickupableItem : NetworkBehaviour
         var col = GetComponent<Collider>();
         if (col != null)
             col.isTrigger = true;
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-
-        if (other.TryGetComponent<PlayerController>(out var player))
-        {
-
-        }
     }
 }

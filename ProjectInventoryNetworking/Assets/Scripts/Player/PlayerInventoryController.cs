@@ -3,19 +3,20 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Fusion;
 
+// Controlador principal del inventario del jugador
 public class PlayerInventoryController : NetworkBehaviour
 {
-    [SerializeField] private Inventory _inventory;
+    [SerializeField] private PlayerInventoryData _inventoryData;
     [SerializeField] private InventoryUiManager _uiManager;
     [SerializeField] private EquipManager _equipManager;
     [SerializeField] private Transform _inventoryContent;
 
-    [Header("Network")]
+    [Header("Pickup")]
     [SerializeField] private float _pickupRange = 2f;
 
     public override void Spawned()
     {
-
+        // Si somos el jugador local, inicializamos la UI
         if (HasInputAuthority)
         {
             if (_uiManager != null && _inventoryContent != null)
@@ -25,53 +26,38 @@ public class PlayerInventoryController : NetworkBehaviour
         }
         else
         {
-
+            // Jugadores remotos no deben ver esta UI
             if (_uiManager != null)
-
-               Destroy(_uiManager.gameObject);
+                Destroy(_uiManager.gameObject);
         }
-
     }
 
     private void InitializeInventoryUI()
     {
-        if (_uiManager == null || _inventory == null) return;
+        if (_uiManager == null || _inventoryData == null) return;
 
         _uiManager.Clear();
 
-        for (int i = 0; i < _inventory.Items.Length; i++)
+        // Recorre los items sincronizados desde el servidor
+        for (int i = 0; i < _inventoryData.Items.Length; i++)
         {
-            ItemData itemData = _inventory.Items[i];
+            var data = _inventoryData.Items[i];
 
-            if (itemData.id != 0)
-            {
+            if (data.id == 0)
+                continue;
 
-                ItemSO itemSO = ItemDatabase.GetItemByIdStatic(itemData.id);
+            // Obtiene el ItemSO asociado a este ID
+            ItemSO itemSO = ItemDatabase.GetItemByIdStatic(data.id);
 
-                if (itemSO != null)
-                {
-
-                    _uiManager.AddItem(itemSO, OnInventorySlotClicked);
-
-                }
-
-            }
-
+            if (itemSO != null)
+                _uiManager.AddItem(itemSO, OnInventorySlotClicked);
         }
-
     }
 
     private void OnInventorySlotClicked(ItemSO item)
     {
-        if (_equipManager.EquippedItemId == item.id)
-        {
-            _equipManager.Unequip();
-        }
-        else
-        {
-            _equipManager.EquipItemFromSlot(item);
-        }
-
+        // Se delega toda la lógica de equipamiento al EquipManager
+        _equipManager.OnSlotClicked(item);
     }
 
     public void TryPickupItem()
@@ -82,44 +68,31 @@ public class PlayerInventoryController : NetworkBehaviour
 
         foreach (var hit in hits)
         {
-
             if (hit.TryGetComponent<PickupableItem>(out var pickup))
             {
-                PickupItemRpc(pickup.Object);
+                PickupItemRPC(pickup.Object);
                 break;
-
             }
-
         }
-
     }
 
-
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    private void PickupItemRpc(NetworkObject itemNetObj, RpcInfo info = default)
+    private void PickupItemRPC(NetworkObject itemNetObj, RpcInfo info = default)
     {
+        if (itemNetObj == null) return;
+        if (!itemNetObj.TryGetComponent<PickupableItem>(out var pickup)) return;
+        if (!_inventoryData.HasStateAuthority) return;
 
-        if (itemNetObj.TryGetComponent<PickupableItem>(out var pickup))
-        {
-            if (_inventory.HasStateAuthority)
-            {
-                bool added = _inventory.AddItem(pickup.ItemData);
+        bool added = _inventoryData.AddItem(pickup.ItemData);
 
-                if (added)
-                {
-                    AddItemToOwnerRpc(pickup.ItemData.id);
+        if (added)
+            AddItemToOwnerRPC(pickup.ItemData.id);
 
-                }
-
-                Runner.Despawn(itemNetObj);
-            }
-
-        }
-
+        Runner.Despawn(itemNetObj);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
-    private void AddItemToOwnerRpc(int itemId, RpcInfo info = default)
+    private void AddItemToOwnerRPC(int itemId, RpcInfo info = default)
     {
         if (!HasInputAuthority || _uiManager == null) return;
 
@@ -127,6 +100,5 @@ public class PlayerInventoryController : NetworkBehaviour
 
         if (itemSO != null)
             _uiManager.AddItem(itemSO, OnInventorySlotClicked);
-
     }
 }
