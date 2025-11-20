@@ -14,7 +14,7 @@ public class PlayerInventoryController : NetworkBehaviour
     [Header("Pickup")]
     [SerializeField] private float _pickupRange = 2f;
 
-    public override void Spawned() // Configura UI y subscripciones según si el jugador tiene InputAuthority
+    public override void Spawned() // Se ejecuta al spawnear el objeto en la red
     {
         if (HasInputAuthority)
         {
@@ -22,19 +22,16 @@ public class PlayerInventoryController : NetworkBehaviour
                 _uiManager.SetContent(_inventoryContent);
 
             if (_inventoryData != null)
-            {
                 _inventoryData.OnInventoryDataLoadedOrChanged += InitializeInventoryUI;
-            }
         }
         else
         {
-            // Jugadores remotos no deben ver esta UI
             if (_uiManager != null)
                 Destroy(_uiManager.gameObject);
         }
     }
 
-    public override void Despawned(NetworkRunner runner, bool hasState) // Desuscribe eventos al ser destruido
+    public override void Despawned(NetworkRunner runner, bool hasState) // Se ejecuta al despawnear el objeto en red
     {
         if (HasInputAuthority && _inventoryData != null)
         {
@@ -42,7 +39,7 @@ public class PlayerInventoryController : NetworkBehaviour
         }
     }
 
-    private void InitializeInventoryUI() // Reconstruye la UI leyendo el inventario sincronizado
+    private void InitializeInventoryUI() // Reconstruye la UI del inventario según datos del servidor
     {
         if (_uiManager == null || _inventoryData == null) return;
 
@@ -65,14 +62,21 @@ public class PlayerInventoryController : NetworkBehaviour
     private void OnInventorySlotClicked(ItemSO item)
     {
         if (_equipManager != null)
-        {
             _equipManager.OnSlotClicked(item);
-        }
     }
 
-    public void TryPickupItem() // Detecta items cerca y solicita recogerlos
+    public void TryPickupItem()
     {
         if (!HasInputAuthority) return;
+
+        RPC_RequestPickup();
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)] // Servidor valida y decide qué item se recoge
+    private void RPC_RequestPickup(RpcInfo info = default)
+    {
+        if (!_inventoryData.HasStateAuthority)
+            return;
 
         Collider[] hits = Physics.OverlapSphere(transform.position, _pickupRange);
 
@@ -80,21 +84,13 @@ public class PlayerInventoryController : NetworkBehaviour
         {
             if (hit.TryGetComponent<PickupableItem>(out var pickup))
             {
-                PickupItemRPC(pickup.Object);
-                break;
+                bool added = _inventoryData.AddItem(pickup.ItemData);
+
+                if (added)
+                    Runner.Despawn(pickup.Object);
+
+                return;
             }
         }
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)] // Pedido al StateAuthority para agregar el item al inventario
-    private void PickupItemRPC(NetworkObject itemNetObj, RpcInfo info = default)
-    {
-        if (itemNetObj == null) return;
-        if (!itemNetObj.TryGetComponent<PickupableItem>(out var pickup)) return;
-        if (!_inventoryData.HasStateAuthority) return;
-
-        bool added = _inventoryData.AddItem(pickup.ItemData);
-
-        Runner.Despawn(itemNetObj);
     }
 }
