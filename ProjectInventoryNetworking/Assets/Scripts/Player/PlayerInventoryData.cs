@@ -1,13 +1,22 @@
 using Fusion;
 using UnityEngine;
+using System;
 
 // Componente network que guarda los items del jugador
 public class PlayerInventoryData : NetworkBehaviour
 {
-    [Networked, Capacity(20)]
-    public NetworkArray<ItemData> Items => default;
+    // Creado para notificar cambios en el inventario o al cargar datos iniciales
+    public event Action OnInventoryDataLoadedOrChanged;
 
-    public bool AddItem(ItemData item)
+    // [Networked] con OnChangedRender asegura que OnItemsChanged se llama en el cliente
+    [Networked, Capacity(20), OnChangedRender(nameof(OnItemsChanged))] public NetworkArray<ItemData> Items => default;
+
+    public void OnItemsChanged() // Se invoca en todos los clientes cuando NetworkArray cambia
+    {
+        OnInventoryDataLoadedOrChanged?.Invoke();
+    }
+
+    public bool AddItem(ItemData item) // Intenta agregar un item al inventario en el servidor
     {
         if (!HasStateAuthority) return false;
 
@@ -24,7 +33,7 @@ public class PlayerInventoryData : NetworkBehaviour
         return false;
     }
 
-    public bool RemoveItem(int id)
+    public bool RemoveItem(int id) // Quita un item por id desde el servidor
     {
         if (!HasStateAuthority) return false;
 
@@ -40,7 +49,7 @@ public class PlayerInventoryData : NetworkBehaviour
         return false;
     }
 
-    public bool HasItem(int id)
+    public bool HasItem(int id) // Verifica si el inventario contiene un ID específico
     {
         if (id == 0) return false;
 

@@ -14,15 +14,17 @@ public class PlayerInventoryController : NetworkBehaviour
     [Header("Pickup")]
     [SerializeField] private float _pickupRange = 2f;
 
-    public override void Spawned()
+    public override void Spawned() // Configura UI y subscripciones según si el jugador tiene InputAuthority
     {
-        // Si somos el jugador local, inicializamos la UI
         if (HasInputAuthority)
         {
             if (_uiManager != null && _inventoryContent != null)
                 _uiManager.SetContent(_inventoryContent);
 
-            InitializeInventoryUI();
+            if (_inventoryData != null)
+            {
+                _inventoryData.OnInventoryDataLoadedOrChanged += InitializeInventoryUI;
+            }
         }
         else
         {
@@ -32,13 +34,20 @@ public class PlayerInventoryController : NetworkBehaviour
         }
     }
 
-    private void InitializeInventoryUI()
+    public override void Despawned(NetworkRunner runner, bool hasState) // Desuscribe eventos al ser destruido
+    {
+        if (HasInputAuthority && _inventoryData != null)
+        {
+            _inventoryData.OnInventoryDataLoadedOrChanged -= InitializeInventoryUI;
+        }
+    }
+
+    private void InitializeInventoryUI() // Reconstruye la UI leyendo el inventario sincronizado
     {
         if (_uiManager == null || _inventoryData == null) return;
 
         _uiManager.Clear();
 
-        // Recorre los items sincronizados desde el servidor
         for (int i = 0; i < _inventoryData.Items.Length; i++)
         {
             var data = _inventoryData.Items[i];
@@ -46,7 +55,6 @@ public class PlayerInventoryController : NetworkBehaviour
             if (data.id == 0)
                 continue;
 
-            // Obtiene el ItemSO asociado a este ID
             ItemSO itemSO = ItemDatabase.GetItemByIdStatic(data.id);
 
             if (itemSO != null)
@@ -56,11 +64,13 @@ public class PlayerInventoryController : NetworkBehaviour
 
     private void OnInventorySlotClicked(ItemSO item)
     {
-        // Se delega toda la lógica de equipamiento al EquipManager
-        _equipManager.OnSlotClicked(item);
+        if (_equipManager != null)
+        {
+            _equipManager.OnSlotClicked(item);
+        }
     }
 
-    public void TryPickupItem()
+    public void TryPickupItem() // Detecta items cerca y solicita recogerlos
     {
         if (!HasInputAuthority) return;
 
@@ -76,7 +86,7 @@ public class PlayerInventoryController : NetworkBehaviour
         }
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)] // Pedido al StateAuthority para agregar el item al inventario
     private void PickupItemRPC(NetworkObject itemNetObj, RpcInfo info = default)
     {
         if (itemNetObj == null) return;
@@ -85,20 +95,6 @@ public class PlayerInventoryController : NetworkBehaviour
 
         bool added = _inventoryData.AddItem(pickup.ItemData);
 
-        if (added)
-            AddItemToOwnerRPC(pickup.ItemData.id);
-
         Runner.Despawn(itemNetObj);
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
-    private void AddItemToOwnerRPC(int itemId, RpcInfo info = default)
-    {
-        if (!HasInputAuthority || _uiManager == null) return;
-
-        ItemSO itemSO = ItemDatabase.GetItemByIdStatic(itemId);
-
-        if (itemSO != null)
-            _uiManager.AddItem(itemSO, OnInventorySlotClicked);
     }
 }

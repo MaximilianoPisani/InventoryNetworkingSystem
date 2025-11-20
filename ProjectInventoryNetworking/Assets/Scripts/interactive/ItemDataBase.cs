@@ -7,7 +7,7 @@ public class ItemDatabase : ScriptableObject
 {
     public List<ItemSO> items = new List<ItemSO>();
 
-    public ItemSO GetItemById(int id)
+    public ItemSO GetItemById(int id) // Busca un ItemSO por su id dentro de la lista
     {
         return items.Find(i => i.id == id);
     }
@@ -21,7 +21,7 @@ public class ItemDatabase : ScriptableObject
         }
     }
 
-    public static ItemSO GetItemByIdStatic(int id)
+    public static ItemSO GetItemByIdStatic(int id) // Acceso global rápido a ItemSO por ID
     {
         return Instance?.GetItemById(id);
     }

@@ -15,7 +15,7 @@ public class InventoryUiManager : MonoBehaviour
         _contentParent = content;
     }
 
-    public void AddItem(ItemSO item, Action<ItemSO> onClick)
+    public void AddItem(ItemSO item, Action<ItemSO> onClick) // Crea visualmente el slot en la UI para un item y asigna el callback de click
     {
         if (item == null || _contentParent == null) return;
         if (_collected.Contains(item)) return;
@@ -42,7 +42,7 @@ public class InventoryUiManager : MonoBehaviour
         }
     }
 
-    public void Clear()
+    public void Clear() // Limpia todos los slots de la UI
     {
         _collected.Clear();
 

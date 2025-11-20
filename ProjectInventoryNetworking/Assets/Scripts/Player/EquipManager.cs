@@ -13,7 +13,7 @@ public class EquipManager : NetworkBehaviour
     // ID sincronizado del item equipado
     [Networked, OnChangedRender(nameof(OnEquippedChangedRender))] public int EquippedItemId { get; set; }
 
-    public override void Spawned()
+    public override void Spawned() // Obtiene inventario y renderiza si ya había un item equipado
     {
         _inventory = GetComponent<PlayerInventoryData>();
 
@@ -21,7 +21,7 @@ public class EquipManager : NetworkBehaviour
             RenderEquippedItem();
     }
 
-    public void OnSlotClicked(ItemSO item)
+    public void OnSlotClicked(ItemSO item) // Interpreta clics de UI para equipar o desequipar items
     {
         if (!HasInputAuthority || item == null)
             return;
@@ -32,8 +32,7 @@ public class EquipManager : NetworkBehaviour
             RPC_RequestEquip(item.id);
     }
 
-    // Server valida el equipamiento
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)] // Solicita al servidor equipar/desequipar
     private void RPC_RequestEquip(int id, RpcInfo info = default)
     {
         if (_inventory == null)
@@ -57,13 +56,13 @@ public class EquipManager : NetworkBehaviour
         EquippedItemId = id;
     }
 
-    // Renderización en todos los clientes
     public void OnEquippedChangedRender()
     {
         RenderEquippedItem();
     }
 
-    private void RenderEquippedItem()
+    // Instancia o destruye el prefab del item equipado (para la entrega se hizo, esto luego sera mejorado con una pool) 
+    private void RenderEquippedItem() 
     {
         if (_currentEquipped != null)
         {

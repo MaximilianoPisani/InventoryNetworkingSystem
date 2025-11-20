@@ -12,7 +12,7 @@ public class InventoryUIPanelController : NetworkBehaviour
 
     private bool _initialized = false;
 
-    public override void Spawned()
+    public override void Spawned() // Se ejecuta cuando el objeto aparece en escena 
     {
         // se elimina UI en clientes que no son el input authority
         if (!HasInputAuthority)
@@ -29,7 +29,7 @@ public class InventoryUIPanelController : NetworkBehaviour
     }
 
 
-    private void SetupLocalUI()
+    private void SetupLocalUI() // Configura los botones y el panel para abrir/cerrar el inventario
     {
         if (_initialized) return;
         _initialized = true;
